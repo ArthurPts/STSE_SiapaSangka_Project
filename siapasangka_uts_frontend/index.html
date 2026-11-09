@@ -1,0 +1,899 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Game Catalog</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/vue-router@4/dist/vue-router.global.js"></script>
+    <style>
+      :root {
+        --bg: #1a1a1a;
+        --bg-2: #242424;
+        --bg-3: #2e2e2e;
+        --border: #3a3a3a;
+        --text: #e5e5e5;
+        --text-dim: #a0a0a0;
+        --accent: #6b7280;
+        --accent-hover: #9ca3af;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+      a { color: inherit; text-decoration: none; }
+
+      .navbar {
+        background: #111;
+        border-bottom: 1px solid var(--border);
+        padding: 16px 32px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .navbar h1 {
+        margin: 0;
+        font-size: 18px;
+        color: var(--accent-hover);
+        letter-spacing: 1px;
+      }
+      .navbar nav { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+      .navbar nav a {
+        color: var(--text-dim);
+        font-size: 15px;
+        padding: 6px 4px;
+        border-bottom: 2px solid transparent;
+        transition: 0.2s;
+      }
+      .navbar nav a:hover,
+      .navbar nav a.router-link-active {
+        color: var(--text);
+        border-bottom-color: var(--accent-hover);
+      }
+      .btn-random {
+        padding: 8px 16px;
+        border-radius: 8px;
+        background: var(--bg-3);
+        border: 1px solid var(--border);
+        color: var(--text);
+        font-size: 14px;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .btn-random:hover { border-color: var(--accent-hover); background: var(--bg-2); }
+
+      .container { max-width: 1200px; margin: 0 auto; padding: 32px 16px; }
+
+      .search-panel {
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 28px;
+      }
+      .search-bar { display: flex; gap: 12px; margin-bottom: 14px; }
+      .search-bar input {
+        flex: 1;
+        padding: 14px 18px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        background: var(--bg-3);
+        color: var(--text);
+        font-size: 15px;
+        outline: none;
+        transition: 0.2s;
+      }
+      .search-bar input:focus { border-color: var(--accent-hover); }
+      .search-bar button {
+        padding: 14px 26px;
+        border-radius: 10px;
+        border: none;
+        background: var(--accent);
+        color: white;
+        font-size: 15px;
+        cursor: pointer;
+      }
+      .search-bar button:hover { background: var(--accent-hover); }
+
+      .filters {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+      }
+      .filters input,
+      .filters select {
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: var(--bg-3);
+        color: var(--text);
+        font-size: 14px;
+        outline: none;
+      }
+
+      .filter-actions {
+        margin-top: 14px;
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+      }
+      .btn-secondary {
+        padding: 10px 20px;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--text-dim);
+        border: 1px solid var(--border);
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .btn-secondary:hover { color: var(--text); border-color: var(--accent-hover); }
+      .btn-primary {
+        padding: 10px 24px;
+        border-radius: 8px;
+        border: none;
+        background: var(--accent);
+        color: white;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .btn-primary:hover { background: var(--accent-hover); }
+
+      .status {
+        text-align: center;
+        color: var(--text-dim);
+        margin-bottom: 24px;
+        font-size: 15px;
+      }
+
+      .banner-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 22px;
+      }
+      .banner-card {
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+        display: flex;
+        flex-direction: column;
+      }
+      .banner-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-hover);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6);
+      }
+      .banner-card img {
+        width: 100%;
+        height: 170px;
+        object-fit: cover;
+        background: var(--bg-3);
+      }
+      .banner-card .banner-body { padding: 16px; flex: 1; }
+      .banner-card h3 { margin: 0 0 8px; font-size: 17px; }
+      .banner-card .banner-meta {
+        font-size: 13px;
+        color: var(--text-dim);
+        line-height: 1.6;
+      }
+      .price-tag {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 4px 10px;
+        border-radius: 6px;
+        background: rgba(107, 114, 128, 0.25);
+        color: var(--accent-hover);
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .skeleton-card {
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .skeleton-img {
+        width: 100%;
+        height: 170px;
+        background: linear-gradient(90deg, var(--bg-3) 25%, #383838 50%, var(--bg-3) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+      }
+      .skeleton-body { padding: 16px; }
+      .skeleton-line {
+        height: 14px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        background: linear-gradient(90deg, var(--bg-3) 25%, #383838 50%, var(--bg-3) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+      }
+      .skeleton-line.w-70 { width: 70%; }
+      .skeleton-line.w-40 { width: 40%; }
+      .skeleton-line.w-50 { width: 50%; }
+      @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+
+      .pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin-top: 32px;
+      }
+      .pagination button {
+        padding: 10px 18px;
+        border-radius: 8px;
+        background: var(--bg-2);
+        color: var(--text);
+        border: 1px solid var(--border);
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .pagination button:hover:not(:disabled) { border-color: var(--accent-hover); }
+      .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+      .pagination span { color: var(--text-dim); font-size: 14px; }
+
+      .detail-hero {
+        width: 100%;
+        height: 380px;
+        object-fit: cover;
+        border-radius: 16px;
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        margin-bottom: 24px;
+      }
+      .detail-title { font-size: 30px; margin: 0 0 12px; }
+      .detail-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        color: var(--text-dim);
+        font-size: 14px;
+        margin-bottom: 24px;
+      }
+      .detail-section {
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 18px;
+      }
+      .detail-section h4 {
+        margin: 0 0 12px;
+        color: var(--accent-hover);
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+      }
+      .detail-section p {
+        margin: 0;
+        line-height: 1.7;
+        font-size: 15px;
+      }
+
+      .tag-link {
+        display: inline-block;
+        margin: 4px 6px 4px 0;
+        padding: 6px 12px;
+        border-radius: 6px;
+        background: var(--bg-3);
+        border: 1px solid var(--border);
+        color: var(--text-dim);
+        font-size: 13px;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .tag-link:hover { color: var(--text); border-color: var(--accent-hover); }
+
+      .screenshot-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 12px;
+      }
+      .screenshot-grid img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 8px;
+        background: var(--bg-3);
+      }
+
+      .empty-box {
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        color: var(--text-dim);
+      }
+      .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: var(--text-dim);
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .back-link:hover { color: var(--text); }
+
+      .page-title {
+        font-size: 24px;
+        margin: 0 0 24px;
+        color: var(--accent-hover);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .page-title small {
+        font-size: 14px;
+        color: var(--text-dim);
+        font-weight: normal;
+      }
+
+      @media (max-width: 600px) {
+        .navbar { padding: 12px 16px; }
+        .navbar nav { gap: 14px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script>
+      const { createApp, ref, onMounted, computed, watch } = Vue;
+      const { createRouter, createWebHashHistory, useRoute, useRouter } = VueRouter;
+
+      const API_BASE = "http://154.19.37.2:50706";
+
+      const getImage = (url) => (!url || url === "NULL")
+        ? "https://via.placeholder.com/460x215/2e2e2e/888888?text=No+Image"
+        : url;
+
+      const onImgError = (e) => {
+        e.target.src = "https://via.placeholder.com/460x215/2e2e2e/888888?text=No+Image";
+      };
+
+      const formatPrice = (price) => {
+        if (!price) return "-";
+        const p = String(price).toLowerCase();
+        if (p === "0" || p === "0.0" || p === "0.00" || p.startsWith("free")) return "GRATIS";
+        return price;
+      };
+
+      const DEFAULT_FILTERS = {
+        search: "",
+        genre: "",
+        category: "",
+        developer: "",
+        free: "",
+        sort: "appid",
+        order: "desc",
+      };
+
+      const SkeletonCard = {
+        template: `
+          <div class="skeleton-card">
+            <div class="skeleton-img"></div>
+            <div class="skeleton-body">
+              <div class="skeleton-line w-70"></div>
+              <div class="skeleton-line w-40"></div>
+              <div class="skeleton-line w-50"></div>
+            </div>
+          </div>
+        `
+      };
+
+      const SkeletonGrid = {
+        components: { SkeletonCard },
+        template: `
+          <div class="banner-grid">
+            <SkeletonCard v-for="i in 8" :key="i" />
+          </div>
+        `
+      };
+
+      const BannerGrid = {
+        props: ["games"],
+        emits: ["open"],
+        template: `
+          <div class="banner-grid">
+            <div
+              class="banner-card"
+              v-for="game in games"
+              :key="game.appid"
+              @click="$emit('open', game.appid)"
+            >
+              <img :src="img(game.header_image)" :alt="game.name" @error="err" />
+              <div class="banner-body">
+                <h3>{{ game.name || 'Tanpa Judul' }}</h3>
+                <div class="banner-meta">
+                  📅 {{ game.release_date || '-' }}<br />
+                  🏢 {{ game.developers || '-' }}
+                </div>
+                <span class="price-tag">{{ price(game.price) }}</span>
+              </div>
+            </div>
+          </div>
+        `,
+        methods: { img: getImage, err: onImgError, price: formatPrice }
+      };
+
+      const HomePage = {
+        components: { BannerGrid, SkeletonGrid },
+        template: `
+          <div class="container">
+            <div class="search-panel">
+              <div class="search-bar">
+                <input type="text" v-model="filters.search" placeholder="Cari nama game..." @keyup.enter="searchNow" />
+                <button @click="searchNow" :disabled="loading">Cari</button>
+              </div>
+              <div class="filters">
+                <input v-model="filters.genre" placeholder="Genre (mis: Action,RPG)" />
+                <input v-model="filters.category" placeholder="Category" />
+                <input v-model="filters.developer" placeholder="Developer" />
+                <select v-model="filters.free">
+                  <option value="">Semua Harga</option>
+                  <option value="true">Gratis</option>
+                </select>
+                <select v-model="filters.sort">
+                  <option value="appid">Urut: AppID</option>
+                  <option value="name">Urut: Nama</option>
+                </select>
+                <select v-model="filters.order">
+                  <option value="desc">Descending</option>
+                  <option value="asc">Ascending</option>
+                </select>
+              </div>
+              <div class="filter-actions">
+                <button class="btn-secondary" @click="resetFilters">Reset</button>
+                <button class="btn-primary" @click="applyFilters" :disabled="loading">Terapkan Filter</button>
+              </div>
+            </div>
+
+            <div class="status" v-if="!loading">{{ statusMessage }}</div>
+
+            <SkeletonGrid v-if="loading" />
+            <BannerGrid v-else-if="games.length > 0" :games="games" @open="goToDetail" />
+            <div v-else-if="loaded" class="empty-box">Tidak ada game ditemukan.</div>
+
+            <div v-if="!loading && games.length > 0" class="pagination">
+              <button :disabled="page <= 1" @click="changePage(page - 1)">← Prev</button>
+              <span>Halaman {{ page }}</span>
+              <button :disabled="games.length < limit" @click="changePage(page + 1)">Next →</button>
+            </div>
+          </div>
+        `,
+        setup() {
+          const router = useRouter();
+          const route = useRoute();
+          const games = ref([]);
+          const statusMessage = ref("Memuat daftar game...");
+          const loaded = ref(false);
+          const loading = ref(false);
+          const page = ref(1);
+          const limit = ref(20);
+
+          const filters = ref({ ...DEFAULT_FILTERS });
+
+          const readFromUrl = () => {
+            const q = route.query;
+            filters.value = {
+              search: q.search || "",
+              genre: q.genre || "",
+              category: q.category || "",
+              developer: q.developer || "",
+              free: q.free || "",
+              sort: q.sort || "appid",
+              order: q.order || "desc",
+            };
+            page.value = parseInt(q.page) || 1;
+          };
+
+          const syncToUrl = () => {
+            const query = {};
+            if (filters.value.search) query.search = filters.value.search;
+            if (filters.value.genre) query.genre = filters.value.genre;
+            if (filters.value.category) query.category = filters.value.category;
+            if (filters.value.developer) query.developer = filters.value.developer;
+            if (filters.value.free) query.free = filters.value.free;
+            if (filters.value.sort !== "appid") query.sort = filters.value.sort;
+            if (filters.value.order !== "desc") query.order = filters.value.order;
+            if (page.value > 1) query.page = page.value;
+
+            router.replace({ path: "/", query });
+          };
+
+          const buildQuery = () => {
+            const params = new URLSearchParams();
+            if (filters.value.search) params.append("search", filters.value.search);
+            if (filters.value.genre) params.append("genre", filters.value.genre);
+            if (filters.value.category) params.append("category", filters.value.category);
+            if (filters.value.developer) params.append("developer", filters.value.developer);
+            if (filters.value.free) params.append("free", filters.value.free);
+            if (filters.value.sort) params.append("sort", filters.value.sort);
+            if (filters.value.order) params.append("order", filters.value.order);
+            params.append("page", page.value);
+            params.append("limit", limit.value);
+            return params.toString();
+          };
+
+          const fetchGames = async () => {
+            loading.value = true;
+            loaded.value = false;
+            statusMessage.value = "Memuat game...";
+            try {
+              const res = await fetch(`${API_BASE}/games?${buildQuery()}`);
+              if (!res.ok) throw new Error("Gagal memuat data");
+              const data = await res.json();
+              games.value = Array.isArray(data) ? data : [];
+              statusMessage.value = games.value.length
+                ? `Menampilkan ${games.value.length} game`
+                : "Tidak ada game ditemukan";
+            } catch (err) {
+              statusMessage.value = "Error: " + err.message;
+              games.value = [];
+            } finally {
+              loaded.value = true;
+              loading.value = false;
+            }
+          };
+
+          const applyFilters = () => {
+            page.value = 1;
+            syncToUrl();
+            fetchGames();
+          };
+
+          const searchNow = () => {
+            const kw = filters.value.search.trim();
+            if (kw) {
+              filters.value.sort = "name";
+              filters.value.order = "asc";
+            }
+            applyFilters();
+          };
+
+          const resetFilters = () => {
+            filters.value = { ...DEFAULT_FILTERS };
+            page.value = 1;
+            syncToUrl();
+            fetchGames();
+          };
+
+          const changePage = (n) => {
+            page.value = n;
+            syncToUrl();
+            fetchGames();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          };
+
+          const goToDetail = (appid) => router.push(`/game/${appid}`);
+
+          onMounted(() => {
+            readFromUrl();
+            fetchGames();
+          });
+
+          return {
+            games,
+            statusMessage,
+            loaded,
+            loading,
+            page,
+            limit,
+            filters,
+            applyFilters,
+            searchNow,
+            resetFilters,
+            changePage,
+            goToDetail,
+          };
+        }
+      };
+
+      const DetailPage = {
+        template: `
+          <div class="container">
+            <a class="back-link" @click="$router.back()">← Kembali</a>
+            <div v-if="loading" class="status">Memuat detail game...</div>
+            <div v-else-if="error" class="empty-box">{{ error }}</div>
+            <div v-else-if="game">
+              <img class="detail-hero" :src="getImage(game.header_image)" :alt="game.name" @error="onImgError" />
+              <h1 class="detail-title">{{ game.name }}</h1>
+
+              <div class="detail-info">
+                <span>📅 Release: {{ game.release_date || '-' }}</span>
+                <span>💰 Harga: {{ formatPrice(game.price) }}</span>
+                <span>🆔 AppID: {{ game.appid }}</span>
+              </div>
+
+              <div class="detail-section" v-if="game.about_the_game">
+                <h4>About</h4>
+                <p>{{ stripHtml(game.about_the_game) }}</p>
+              </div>
+
+              <div class="detail-section" v-if="game.developers">
+                <h4>Developers</h4>
+                <div class="chips">
+                  <span
+                    v-for="d in splitList(game.developers)"
+                    :key="d"
+                    class="tag-link"
+                    @click="goToDeveloper(d)"
+                  >{{ d }}</span>
+                </div>
+              </div>
+
+              <div class="detail-section" v-if="game.publishers">
+                <h4>Publishers</h4>
+                <p>{{ game.publishers }}</p>
+              </div>
+
+              <div class="detail-section" v-if="game.genres">
+                <h4>Genres</h4>
+                <div class="chips">
+                  <span
+                    v-for="g in splitList(game.genres)"
+                    :key="g"
+                    class="tag-link"
+                    @click="goToGenre(g)"
+                  >{{ g }}</span>
+                </div>
+              </div>
+
+              <div class="detail-section" v-if="game.categories">
+                <h4>Categories</h4>
+                <p>{{ game.categories }}</p>
+              </div>
+
+              <div class="detail-section" v-if="game.tags">
+                <h4>Tags</h4>
+                <p>{{ game.tags }}</p>
+              </div>
+
+              <div class="detail-section" v-if="screenshots.length">
+                <h4>Screenshots</h4>
+                <div class="screenshot-grid">
+                  <img v-for="(s, i) in screenshots" :key="i" :src="s" @error="onImgError" />
+                </div>
+              </div>
+            </div>
+          </div>
+        `,
+        setup() {
+          const route = useRoute();
+          const router = useRouter();
+          const game = ref(null);
+          const loading = ref(true);
+          const error = ref("");
+          const screenshots = ref([]);
+
+          const stripHtml = (html) => {
+            if (!html) return "";
+            const tmp = document.createElement("div");
+            tmp.innerHTML = html;
+            return tmp.textContent || tmp.innerText || "";
+          };
+
+          const splitList = (raw) => {
+            if (!raw || raw === "NULL") return [];
+            return String(raw).split(",").map((s) => s.trim()).filter(Boolean);
+          };
+
+          const parseScreenshots = (raw) => {
+            if (!raw || raw === "NULL") return [];
+            try {
+              const parsed = JSON.parse(raw);
+              if (Array.isArray(parsed)) return parsed;
+            } catch (_) {}
+            return splitList(raw);
+          };
+
+          const goToDeveloper = (d) => router.push(`/developer/${encodeURIComponent(d)}`);
+          const goToGenre = (g) => router.push(`/genre/${encodeURIComponent(g)}`);
+
+          const loadGame = async (appid) => {
+            loading.value = true;
+            error.value = "";
+            game.value = null;
+            screenshots.value = [];
+            try {
+              const res = await fetch(`${API_BASE}/games/${appid}`);
+              if (!res.ok) throw new Error("Game tidak ditemukan");
+              game.value = await res.json();
+              screenshots.value = parseScreenshots(game.value.screenshots);
+            } catch (err) {
+              error.value = "Error: " + err.message;
+            } finally {
+              loading.value = false;
+            }
+          };
+
+          onMounted(() => loadGame(route.params.appid));
+
+          watch(() => route.params.appid, (newId) => {
+            if (newId) loadGame(newId);
+          });
+
+          return {
+            game,
+            loading,
+            error,
+            screenshots,
+            getImage,
+            onImgError,
+            formatPrice,
+            stripHtml,
+            splitList,
+            goToDeveloper,
+            goToGenre,
+          };
+        }
+      };
+
+      const DeveloperPage = {
+        components: { BannerGrid, SkeletonGrid },
+        template: `
+          <div class="container">
+            <a class="back-link" @click="$router.push('/')">← Home</a>
+            <h2 class="page-title">
+              🏢 Game oleh <span style="color:var(--text)">{{ nama }}</span>
+              <small v-if="!loading">({{ games.length }} game)</small>
+            </h2>
+            <div class="status" v-if="!loading">{{ statusMessage }}</div>
+            <SkeletonGrid v-if="loading" />
+            <BannerGrid v-else-if="games.length > 0" :games="games" @open="goToDetail" />
+            <div v-else-if="loaded" class="empty-box">Tidak ada game dari developer ini.</div>
+          </div>
+        `,
+        setup() {
+          const route = useRoute();
+          const router = useRouter();
+          const nama = computed(() => route.params.nama);
+          const games = ref([]);
+          const statusMessage = ref("Memuat...");
+          const loaded = ref(false);
+          const loading = ref(false);
+
+          const fetchGames = async () => {
+            loading.value = true;
+            loaded.value = false;
+            try {
+              const res = await fetch(`${API_BASE}/games?developer=${encodeURIComponent(nama.value)}&limit=100`);
+              if (!res.ok) throw new Error("Gagal memuat data");
+              const data = await res.json();
+              games.value = Array.isArray(data) ? data : [];
+              statusMessage.value = games.value.length
+                ? `Ditemukan ${games.value.length} game`
+                : "Tidak ada game ditemukan";
+            } catch (err) {
+              statusMessage.value = "Error: " + err.message;
+            } finally {
+              loaded.value = true;
+              loading.value = false;
+            }
+          };
+
+          const goToDetail = (appid) => router.push(`/game/${appid}`);
+
+          onMounted(fetchGames);
+          watch(nama, fetchGames);
+
+          return { nama, games, statusMessage, loaded, loading, goToDetail };
+        }
+      };
+
+      const GenrePage = {
+        components: { BannerGrid, SkeletonGrid },
+        template: `
+          <div class="container">
+            <a class="back-link" @click="$router.push('/')">← Home</a>
+            <h2 class="page-title">
+              🎯 Genre <span style="color:var(--text)">{{ nama }}</span>
+              <small v-if="!loading">({{ games.length }} game)</small>
+            </h2>
+            <div class="status" v-if="!loading">{{ statusMessage }}</div>
+            <SkeletonGrid v-if="loading" />
+            <BannerGrid v-else-if="games.length > 0" :games="games" @open="goToDetail" />
+            <div v-else-if="loaded" class="empty-box">Tidak ada game di genre ini.</div>
+          </div>
+        `,
+        setup() {
+          const route = useRoute();
+          const router = useRouter();
+          const nama = computed(() => route.params.nama);
+          const games = ref([]);
+          const statusMessage = ref("Memuat...");
+          const loaded = ref(false);
+          const loading = ref(false);
+
+          const fetchGames = async () => {
+            loading.value = true;
+            loaded.value = false;
+            try {
+              const res = await fetch(`${API_BASE}/games?genre=${encodeURIComponent(nama.value)}&limit=100`);
+              if (!res.ok) throw new Error("Gagal memuat data");
+              const data = await res.json();
+              games.value = Array.isArray(data) ? data : [];
+              statusMessage.value = games.value.length
+                ? `Ditemukan ${games.value.length} game`
+                : "Tidak ada game ditemukan";
+            } catch (err) {
+              statusMessage.value = "Error: " + err.message;
+            } finally {
+              loaded.value = true;
+              loading.value = false;
+            }
+          };
+
+          const goToDetail = (appid) => router.push(`/game/${appid}`);
+
+          onMounted(fetchGames);
+          watch(nama, fetchGames);
+
+          return { nama, games, statusMessage, loaded, loading, goToDetail };
+        }
+      };
+
+      const router = createRouter({
+        history: createWebHashHistory(),
+        routes: [
+          { path: "/", component: HomePage },
+          { path: "/game/:appid", component: DetailPage },
+          { path: "/developer/:nama", component: DeveloperPage },
+          { path: "/genre/:nama", component: GenrePage },
+        ],
+      });
+
+      const App = {
+        template: `
+          <nav class="navbar">
+            <h1>🎮 GAME CATALOG</h1>
+            <nav>
+              <router-link to="/">Home</router-link>
+              <button class="btn-random" @click="surpriseMe">🎲 Surprise Me</button>
+            </nav>
+          </nav>
+          <router-view></router-view>
+        `,
+        setup() {
+          const router = useRouter();
+
+          const surpriseMe = async () => {
+            try {
+              const POOL_SIZE = 500;
+              const res = await fetch(`${API_BASE}/games?limit=${POOL_SIZE}&page=1`);
+              if (!res.ok) throw new Error("Gagal ambil data");
+              const data = await res.json();
+              if (!Array.isArray(data) || data.length === 0) {
+                alert("Tidak ada game di database");
+                return;
+              }
+              const pick = data[Math.floor(Math.random() * data.length)];
+              router.push(`/game/${pick.appid}`);
+            } catch (err) {
+              alert("Error: " + err.message);
+            }
+          };
+
+          return { surpriseMe };
+        }
+      };
+
+      createApp(App).use(router).mount("#app");
+    </script>
+  </body>
+</html>

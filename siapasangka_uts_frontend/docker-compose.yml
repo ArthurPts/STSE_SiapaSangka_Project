@@ -1,0 +1,7 @@
+services:
+  frontend:
+    build: .
+    container_name: uts_siapasangka_frontend
+    restart: unless-stopped
+    ports:
+      - "50705:80"
